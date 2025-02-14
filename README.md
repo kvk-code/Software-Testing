@@ -95,14 +95,62 @@ if __name__ == '__main__':
 
 **Equivalence Classes for `/register`:**
 
-- **Valid Equivalence Class:**
-  - `{ "username": "john_doe", "email": "john@example.com" }`
-  
-- **Invalid Equivalence Classes:**
-  - Missing fields: `{ "username": "john_doe" }` or `{ "email": "john@example.com" }`
-  - Username too short: `{ "username": "jo", "email": "john@example.com" }`
-  - Username too long: `{ "username": "j" * 25, "email": "john@example.com" }`
-  - Invalid email: `{ "username": "john_doe", "email": "johnexample.com" }`
+
+### Valid Equivalence Class
+
+#### Valid Input
+**E1:** A payload where the username is within the valid range (3–20 characters) and the email is in a valid format.  
+**Example:**
+```json
+{
+  "username": "john_doe",
+  "email": "john@example.com"
+}
+```
+
+### Invalid Equivalence Classes
+
+#### Missing Required Fields
+**E2:** Payload with one or more missing required fields.  
+**Example 1 (missing username):**
+```json
+{
+  "email": "john@example.com"
+}
+```
+**Example 2 (missing email):**
+```json
+{
+  "username": "john_doe"
+}
+```
+
+#### Invalid Username Length
+**E3:** Payload where the username is outside the allowed length range (either too short or too long).  
+**Example (too short):**
+```json
+{
+  "username": "jo",
+  "email": "john@example.com"
+}
+```
+**Example (too long):**
+```json
+{
+  "username": "j" * 25,
+  "email": "john@example.com"
+}
+```
+
+#### Invalid Email Format
+**E4:** Payload where the email does not meet the format requirements (e.g., missing "@" or ".").  
+**Example:**
+```json
+{
+  "username": "john_doe",
+  "email": "johnexample.com"
+}
+```
 
 ### Case Study: Testing API Payloads
 
