@@ -253,109 +253,297 @@ if __name__ == '__main__':
 
 ## Boundary Value Analysis
 
-### Definition and Importance of Boundary Values
 
-**Boundary Value Analysis (BVA)** focuses on testing the edges of input ranges. Since errors frequently occur at the boundaries of input domains, it is crucial to test the minimum, maximum, just-inside/outside, typical, and error values.
+# Boundary Value Analysis for the /register Endpoint
 
-- **Why It’s Critical:**
-  - **Edge Case Identification:** Many bugs occur at the boundaries of valid input ranges.
-  - **Increased Confidence:** Ensures that the system handles edge cases properly.
-  - **Complement to Equivalence Partitioning:** Provides additional assurance that not only typical values are tested but also the limits.
+## Overview
 
-### Examples: Determining Edge Cases for API Parameters
+**Boundary Value Analysis (BVA)** focuses on testing the edges of input ranges where errors are most likely to occur. In our **/register** API, the two primary fields are:
 
-**Scenario:** Testing a login API endpoint where the username must be 5–15 characters.
+- **username**: Must be between **3 and 20 characters**.
+- **email**: Must be in a valid email format (i.e., include both an "@" and a ".").
 
-- **Edge Cases:**
-  - **Minimum Valid:** Username of exactly 5 characters.
-  - **Just Below Minimum:** Username of 4 characters.
-  - **Maximum Valid:** Username of exactly 15 characters.
-  - **Just Above Maximum:** Username of 16 characters.
+Testing the boundaries helps ensure the system correctly handles the minimum, maximum, and just-outside-the-boundary cases, thus increasing overall confidence in the application.
+
+---
+
+## Why Boundary Value Analysis is Critical
+
+- **Edge Case Identification:**  
+  Many bugs surface at the limits of acceptable input. Testing the boundary values (e.g., usernames with 2, 3, 20, and 21 characters) helps uncover issues that might not be caught when testing only typical values.
   
-For the `/register` endpoint (from the previous section), you would also consider the email format but focus here on the username length.
+- **Increased Confidence:**  
+  Verifying edge cases ensures the system gracefully handles input that is exactly on or just outside the boundaries.
+  
+- **Complement to Equivalence Partitioning:**  
+  While equivalence partitioning tests representative values from valid and invalid classes, BVA zeroes in on the precise thresholds where errors are most common.
 
-### Sample Code and Diagrams
+---
 
-**Flask Endpoint Example for Login:**
+## Use Case: /register API Endpoint Specification
+
+### Endpoint Details
+
+- **Endpoint:** `POST /register`
+- **Description:** Registers a new user in the system.
+
+### Request Payload
+
+- **username (string, required):**  
+  - Must be between 3 and 20 characters.
+  - If not, returns an error: `"Username length must be between 3 and 20 characters"`.
+
+- **email (string, required):**  
+  - Must contain both an "@" symbol and a ".".
+  - If not, returns an error: `"Invalid email format"`.
+
+### Response Codes
+
+- **201 Created:**  
+  Successful user registration.
+
+- **400 Bad Request:**  
+  Validation failures (e.g., missing required fields, invalid username length, or invalid email format).
+
+#### Example Requests
+
+- **Success:**
+
+  ```json
+  {
+    "username": "john_doe",
+    "email": "john@example.com"
+  }
+  ```
+
+- **Error – Missing Field:**
+
+  ```json
+  {
+    "error": "Missing required fields"
+  }
+  ```
+
+- **Error – Invalid Username:**
+
+  ```json
+  {
+    "error": "Username length must be between 3 and 20 characters"
+  }
+  ```
+
+- **Error – Invalid Email Format:**
+
+  ```json
+  {
+    "error": "Invalid email format"
+  }
+  ```
+
+---
+
+## Boundary Value Analysis for the /register Endpoint
+
+### Username Boundary Cases
+
+Given the username must be between **3 and 20 characters**, the key boundary values include:
+
+- **Minimum Valid:**  
+  - Exactly 3 characters (e.g., `"abc"`).
+- **Just Below Minimum:**  
+  - 2 characters (e.g., `"ab"`).
+- **Maximum Valid:**  
+  - Exactly 20 characters (e.g., `"a" * 20`).
+- **Just Above Maximum:**  
+  - 21 characters (e.g., `"a" * 21`).
+
+### Email Format Considerations
+
+While email validation focuses on format rather than length, the following boundary-like cases are important:
+
+- **Valid Email:**  
+  - Contains both "@" and "." (e.g., `"john@example.com"`).
+- **Invalid Email – Missing "@":**  
+  - (e.g., `"johnexample.com"`).
+- **Invalid Email – Missing ".":**  
+  - (e.g., `"john@examplecom"`).
+
+---
+
+## Sample Flask Implementation
+
+Below is an example of a Flask endpoint implementing the above validation logic:
 
 ```python
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-@app.route('/login', methods=['POST'])
-def login():
+@app.route('/register', methods=['POST'])
+def register():
     data = request.get_json()
     username = data.get('username')
-    password = data.get('password')
+    email = data.get('email')
     
-    if not username or not password:
+    # Check for required fields
+    if not username or not email:
         return jsonify({"error": "Missing required fields"}), 400
     
-    if len(username) < 5 or len(username) > 15:
-        return jsonify({"error": "Username must be between 5 and 15 characters"}), 400
+    # Validate username length
+    if len(username) < 3 or len(username) > 20:
+        return jsonify({"error": "Username length must be between 3 and 20 characters"}), 400
+    
+    # Validate email format
+    if "@" not in email or "." not in email:
+        return jsonify({"error": "Invalid email format"}), 400
 
-    # Login logic here...
-    return jsonify({"message": "Login successful"}), 200
+    # Registration logic here...
+    return jsonify({"message": "User registered successfully"}), 201
 
 if __name__ == '__main__':
     app.run(debug=True)
 ```
 
-**Diagram: Boundary Values for Username**
+---
 
-```plaintext
-        |--- Invalid (4 chars) ---|--- Valid (5 chars) --- ... ---|--- Valid (15 chars) ---|--- Invalid (16 chars) ---|
+## Diagram: Boundary Values for Username
+
+```
+        |--- Invalid (2 chars) ---|--- Valid (3 chars) --- ... ---|--- Valid (20 chars) ---|--- Invalid (21 chars) ---|
 ```
 
-**Sample Python Test Code using Flask's Test Client:**
+---
+
+## Equivalence Classes for /register
+
+### Valid Equivalence Class
+
+- **E1: Valid Input**  
+  A payload with a username of 3–20 characters and an email with both "@" and ".".  
+  **Example:**
+  ```json
+  {
+    "username": "john_doe",
+    "email": "john@example.com"
+  }
+  ```
+
+### Invalid Equivalence Classes
+
+- **E2: Missing Required Fields**  
+  Payload missing either the username or email.  
+  **Examples:**
+  ```json
+  {
+    "email": "john@example.com"
+  }
+  ```
+  ```json
+  {
+    "username": "john_doe"
+  }
+  ```
+
+- **E3: Invalid Username Length**  
+  Username is too short or too long.  
+  **Examples:**
+  - Too Short:
+    ```json
+    {
+      "username": "ab",
+      "email": "john@example.com"
+    }
+    ```
+  - Too Long:
+    ```json
+    {
+      "username": "j" * 25,  // 25 characters
+      "email": "john@example.com"
+    }
+    ```
+
+- **E4: Invalid Email Format**  
+  Email does not contain the required characters.  
+  **Example:**
+  ```json
+  {
+    "username": "john_doe",
+    "email": "johnexample.com"
+  }
+  ```
+
+---
+
+## Sample Python Test Code Using Flask's Test Client
+
+Here is an example of how you might write unit tests for the boundary values using Flask's test client:
 
 ```python
 import unittest
 import json
 from your_flask_app import app  # Ensure your app is imported properly
 
-class TestLoginBoundaryValues(unittest.TestCase):
+class TestRegisterBoundaryValues(unittest.TestCase):
 
     def setUp(self):
         self.client = app.test_client()
 
+    # Username Boundary Tests
     def test_username_min_valid(self):
-        payload = {"username": "abcde", "password": "validpassword"}
-        response = self.client.post('/login', json=payload)
-        self.assertEqual(response.status_code, 200)
+        payload = {"username": "abc", "email": "john@example.com"}
+        response = self.client.post('/register', json=payload)
+        self.assertEqual(response.status_code, 201)
 
     def test_username_below_min(self):
-        payload = {"username": "abcd", "password": "validpassword"}
-        response = self.client.post('/login', json=payload)
+        payload = {"username": "ab", "email": "john@example.com"}
+        response = self.client.post('/register', json=payload)
         self.assertEqual(response.status_code, 400)
 
     def test_username_max_valid(self):
-        payload = {"username": "a" * 15, "password": "validpassword"}
-        response = self.client.post('/login', json=payload)
-        self.assertEqual(response.status_code, 200)
+        payload = {"username": "a" * 20, "email": "john@example.com"}
+        response = self.client.post('/register', json=payload)
+        self.assertEqual(response.status_code, 201)
 
     def test_username_above_max(self):
-        payload = {"username": "a" * 16, "password": "validpassword"}
-        response = self.client.post('/login', json=payload)
+        payload = {"username": "a" * 21, "email": "john@example.com"}
+        response = self.client.post('/register', json=payload)
+        self.assertEqual(response.status_code, 400)
+
+    # Email Format Tests
+    def test_valid_email_format(self):
+        payload = {"username": "john_doe", "email": "john@example.com"}
+        response = self.client.post('/register', json=payload)
+        self.assertEqual(response.status_code, 201)
+
+    def test_invalid_email_missing_at(self):
+        payload = {"username": "john_doe", "email": "johnexample.com"}
+        response = self.client.post('/register', json=payload)
+        self.assertEqual(response.status_code, 400)
+
+    def test_invalid_email_missing_dot(self):
+        payload = {"username": "john_doe", "email": "john@examplecom"}
+        response = self.client.post('/register', json=payload)
         self.assertEqual(response.status_code, 400)
 
 if __name__ == '__main__':
     unittest.main()
 ```
 
-### Exercises for Boundary Value Analysis
+---
 
-1. **Exercise 1:**  
-   Identify the boundary values for a REST API endpoint that accepts an integer parameter (e.g., `age`) between 18 and 65. List the test cases that should be executed.
+## Exercises for Boundary Value Analysis
 
-2. **Exercise 2:**  
-   Modify the `/register` endpoint to include a `phone_number` that must be exactly 10 digits long. Identify and implement test cases for the boundary values.
+**Exercise 1:**  
+For the **/register** endpoint, identify the boundary values for the `username` parameter (which must be 3–20 characters). List the corresponding test cases (including just-below and just-above values).
 
-3. **Exercise 3:**  
-   Create a diagram for the boundary values of a field (e.g., `password` length) that requires a minimum of 8 characters and a maximum of 20 characters.
+**Exercise 2:**  
+Extend the **/register** endpoint to include a `phone_number` field that must be exactly 10 digits long. Identify the boundary values (i.e., test with 9 digits, 10 digits, and 11 digits) and implement corresponding test cases.
+
+**Exercise 3:**  
+Create a diagram for the boundary values of the `password` field (assuming a requirement of a minimum of 8 characters and a maximum of 20 characters). Include markers for just-below, valid, and just-above cases.
 
 ---
+
 
 ## State Transition Testing
 
