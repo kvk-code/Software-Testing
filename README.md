@@ -62,6 +62,78 @@ When testing a Flask REST API, consider an endpoint that processes user data. Fo
   - Payloads with invalid email formats.
   - Payloads with out-of-bound values (e.g., username too short or too long).
 
+
+## Sample API Specification Document for /register
+
+### Endpoint:
+**POST** `/register`
+
+### Description:
+Registers a new user in the system.
+
+### Request Payload:
+
+- `username` (string, required):
+  - Must be between 3 and 20 characters.
+
+- `email` (string, required):
+  - Must be in a valid email format (i.e., it should contain an "@" symbol and a ".").
+
+### Validation Requirements:
+
+- **Required Fields:**
+  - Both username and email must be provided.
+
+- **Username Constraints:**
+  - The length must be at least 3 characters and no more than 20 characters.
+  - If the username is too short (less than 3 characters) or too long (more than 20 characters), the system should return an error message such as:
+    - `"Username length must be between 3 and 20 characters"`.
+
+- **Email Format Constraints:**
+  - The email must include both an "@" and a ".".
+  - If the email does not meet these requirements, the system should return an error message such as:
+    - `"Invalid email format"`.
+
+### Response Codes:
+
+- **201 Created:**
+  - When the user is successfully registered.
+
+- **400 Bad Request:**
+  - When validation fails (e.g., missing required fields, invalid username length, or invalid email format).
+
+### Example Success Request:
+```json
+{
+  "username": "john_doe",
+  "email": "john@example.com"
+}
+```
+
+### Example Error Responses:
+
+- **Missing Username:**
+```json
+{
+  "error": "Missing required fields"
+}
+```
+
+- **Invalid Username (Too Short):**
+```json
+{
+  "error": "Username length must be between 3 and 20 characters"
+}
+```
+
+- **Invalid Email Format:**
+```json
+{
+  "error": "Invalid email format"
+}
+```
+
+
 **Example:**
 
 Consider the following Flask endpoint:
