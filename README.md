@@ -685,43 +685,64 @@ if __name__ == '__main__':
    - *Tip:* Use the observable outputs (HTTP responses, session tokens) to confirm that the system has transitioned to the expected state.
 
 ---
+Below is an enhanced version of the decision table testing notes, now covering additional obvious cases (such as allowing admins and users to access public resources) and an updated Flask code example:
 
-## Decision Table Testing
+---
 
-### Definition and Usefulness
+# Decision Table Testing
+
+## Definition and Usefulness
 
 **Decision Table Testing** is a technique used to systematically represent and test combinations of conditions and actions. It is particularly useful when the system has multiple rules and conditions that determine its behavior.
 
-- **Why It’s Useful:**
-  - **Clarity:** Helps visualize complex business logic.
-  - **Coverage:** Ensures that all possible combinations of inputs (conditions) and corresponding actions are considered.
-  - **Maintenance:** Simplifies updates when business rules change.
+### Why It’s Useful:
+- **Clarity:** Helps visualize complex business logic.
+- **Coverage:** Ensures that all possible combinations of inputs (conditions) and corresponding actions are considered.
+- **Maintenance:** Simplifies updates when business rules change.
 
-### Creating Decision Tables for Web Service Scenarios
+## Creating Decision Tables for Web Service Scenarios
 
-**Scenario:** Consider an API endpoint `/resource` that enforces access control. The decision to allow access depends on the following conditions:
-- **User Role:** `admin`, `user`, `guest`
-- **Resource Type:** `public`, `private`
-- **Time of Day:** Within working hours (9 AM – 5 PM) or outside
+### Scenario:
+Consider an API endpoint `/resource` that enforces access control. The decision to allow access depends on the following conditions:
+- **User Role:** admin, user, guest
+- **Resource Type:** public, private
+- **Time of Day (for private resources):** Within working hours (9 AM – 5 PM) or outside
 
-**Decision Table:**
+### Enhanced Decision Table:
 
-| Condition / Rule            | Rule 1         | Rule 2         | Rule 3         | Rule 4         |
-|-----------------------------|----------------|----------------|----------------|----------------|
-| **User Role**               | admin          | user           | guest          | user           |
-| **Resource Type**           | private        | private        | public         | private        |
-| **Within Working Hours?**   | Yes            | Yes            | Yes            | No             |
-| **Expected Action**         | Allow access   | Allow access   | Allow access   | Deny access    |
+| Condition / Rule            | Rule 1                       | Rule 2                      | Rule 3                                          | Rule 4                                           | Rule 5                         | Rule 6                          | Rule 7                         |
+|-----------------------------|------------------------------|-----------------------------|-------------------------------------------------|--------------------------------------------------|---------------------------------|---------------------------------|--------------------------------|
+| **User Role**               | admin                        | admin                       | user                                            | user                                             | user                           | guest                           | guest                          |
+| **Resource Type**           | private                      | public                      | private                                         | private                                          | public                         | public                          | private                        |
+| **Within Working Hours?**   | – (not applicable)           | – (not applicable)          | Yes                                             | No                                               | – (not applicable)             | – (not applicable)              | – (not applicable)             |
+| **Expected Action**         | Allow access                 | Allow access                | Allow access                                    | Deny access                                      | Allow access                   | Allow access                    | Deny access                    |
+
+#### Explanation:
+- **Rule 1:** Admin accessing a private resource (always allowed).
+- **Rule 2:** Admin accessing a public resource (always allowed).
+- **Rule 3:** User accessing a private resource within working hours (allowed).
+- **Rule 4:** User accessing a private resource outside working hours (denied).
+- **Rule 5:** User accessing a public resource (always allowed).
+- **Rule 6:** Guest accessing a public resource (allowed).
+- **Rule 7:** Guest accessing a private resource (denied).
 
 From this decision table, you can derive test cases that cover each rule.
 
-### Step-by-Step Examples
+## Step-by-Step Example for Creating the Decision Table:
+1. **Identify Conditions and Possible Values:**  
+   - **User Role:** admin, user, guest  
+   - **Resource Type:** public, private  
+   - **Time of Day (for private resources):** within working hours (yes/no)
 
-1. **Step 1:** Identify conditions and possible values.
-2. **Step 2:** Create the decision table as shown above.
-3. **Step 3:** Map each rule to test cases.
+2. **Create the Decision Table:**  
+   Organize the rules as shown above, ensuring that every combination is addressed based on the business rules.
 
-**Flask Example:**
+3. **Map Each Rule to Test Cases:**  
+   For each rule, create a test case that sets the input values accordingly and verifies that the expected action (allow or deny access) is followed.
+
+## Updated Flask Example Based on the Enhanced Decision Table
+
+Below is an updated Flask implementation that reflects the enhanced decision logic:
 
 ```python
 from flask import Flask, request, jsonify
@@ -740,28 +761,41 @@ def access_resource():
     user_role = request.args.get('role')
     resource_type = request.args.get('type')
     
-    # Conditions based on decision table
-    if user_role == "admin" and resource_type == "private":
+    # Admin: Allowed to access both private and public resources at any time.
+    if user_role == "admin":
         return jsonify({"access": "allowed"}), 200
-    if user_role == "user" and resource_type == "private" and is_within_working_hours():
-        return jsonify({"access": "allowed"}), 200
-    if user_role == "guest" and resource_type == "public":
-        return jsonify({"access": "allowed"}), 200
-    # Additional conditions
+    
+    # User: Access rules depend on resource type.
+    if user_role == "user":
+        if resource_type == "private":
+            if is_within_working_hours():
+                return jsonify({"access": "allowed"}), 200
+            else:
+                return jsonify({"access": "denied"}), 403
+        elif resource_type == "public":
+            return jsonify({"access": "allowed"}), 200
+    
+    # Guest: Only allowed to access public resources.
+    if user_role == "guest":
+        if resource_type == "public":
+            return jsonify({"access": "allowed"}), 200
+        else:
+            return jsonify({"access": "denied"}), 403
+    
+    # For any undefined combinations:
     return jsonify({"access": "denied"}), 403
 
 if __name__ == '__main__':
     app.run(debug=True)
 ```
 
-### Exercises for Decision Table Testing
+## Exercises for Decision Table Testing
 
 1. **Exercise 1:**  
    Create a decision table for a payment processing API that considers:
-   - Payment method (`credit`, `debit`, `paypal`)
-   - Transaction amount (below \$1000, \$1000 and above)
-   - User status (`verified`, `unverified`)
-   
+   - **Payment method:** credit, debit, PayPal  
+   - **Transaction amount:** below \$1000, \$1000 and above  
+   - **User status:** verified, unverified  
    Then, derive test cases from your table.
 
 2. **Exercise 2:**  
@@ -770,13 +804,9 @@ if __name__ == '__main__':
 3. **Exercise 3:**  
    Write unit tests that iterate through all decision table rules for the `/resource` endpoint to ensure that each combination of conditions is properly handled.
 
----
+## Summary
 
-## Conclusion
+In decision table testing, you derive business rules (as combinations of variable values) from requirements (often from a PRD). These tables help you systematically design test cases ensuring that each rule is followed and any violations are tracked and reported.
 
-This study guide has explored four critical test design techniques—**Equivalence Partitioning**, **Boundary Value Analysis**, **State Transition Testing**, and **Decision Table Testing**—with a focus on web services testing using Python and Flask. By understanding these techniques and applying them through hands-on examples and exercises, you can design robust test suites for your web applications.
+For instance, the enhanced decision table above covers multiple scenarios—including cases where admins and users have access to public resources—while the updated Flask code implements these rules accordingly.
 
-**Next Steps:**
-- **Implement:** Use the provided Flask examples and test scripts to build your own test cases.
-- **Extend:** Adapt these techniques to more complex scenarios in your projects.
-- **Practice:** Complete the exercises to deepen your understanding and practical skills.
