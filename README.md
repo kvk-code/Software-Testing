@@ -566,7 +566,7 @@ In a black-box testing approach, you do not have access to the internal code. In
 
 1. **Review Specifications and Diagrams:**  
    - The design documents or requirements may include a state transition diagram that outlines the various states and the actions (or events) that trigger transitions.  
-   - **Placeholder:** *Insert or reference state transition diagram here*
+ ![State Transition Diagram](./state_transition.png)
 
 2. **Identify Observable Behaviors:**  
    - **API Responses:** HTTP status codes, response messages, and headers are visible outputs that indicate whether a state transition has occurred.
@@ -603,7 +603,7 @@ Consider a system with the following states:
   - **Action:** An admin unlocks the account or a timeout expires.
   - **Observable Outcome:** The system reverts to the _Logged Out_ state (or a dedicated _Unlocked_ state) with appropriate messaging.
 
-**Placeholder:** *Insert state transition diagram here, if available*
+![State Transition Diagram](./state_transition.png)
 
 ## Testing State Transitions in a Black-Box Manner
 
