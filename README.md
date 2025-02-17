@@ -683,7 +683,6 @@ if __name__ == '__main__':
 3. **Exercise 3:**  
    Write unit tests using Flask’s test client for the authentication system to simulate the state transitions.  
    - *Tip:* Use the observable outputs (HTTP responses, session tokens) to confirm that the system has transitioned to the expected state.
-```
 
 ---
 
