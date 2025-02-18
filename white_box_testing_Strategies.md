@@ -1,6 +1,4 @@
-Below is an **elaborate explanation** of the key white box testing concepts, **tailored to a novice student**, with a **simple Python function** as a **sample use case**. We’ll walk through each concept step by step—**Control Flow Testing**, **Data Flow Testing**, **Statement Coverage**, **Branch Coverage**, **Condition Coverage**, **Path Coverage**, and **Cyclomatic Complexity**—demonstrating how these ideas apply in practice.
 
----
 
 # 1. Introduction
 
