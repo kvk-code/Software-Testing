@@ -44,6 +44,8 @@ We’ll use this function to illustrate each testing concept.
     
 **Control Flow Graph**
 
+![control_flow_graph](./control_flow_graph.png)
+
 
 
 2. **Design Test Cases**  
