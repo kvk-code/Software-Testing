@@ -1,310 +1,185 @@
+## 1. Introduction to White Box Testing
 
+**White Box Testing** involves designing and executing tests based on the **internal structure** of the code. Unlike black box testing (where you only look at inputs and outputs), white box testing requires knowledge of:
 
-# 1. Introduction
+1. **Control Structures** (e.g., loops, if/else)  
+2. **Variable Usage** (definitions, lifetimes)  
+3. **Internal Logic and Flow**  
 
-White box testing involves looking at the **internal structure** of your code. Instead of just feeding inputs and observing outputs (as in black box testing), you design tests to ensure that **every line, branch, and condition** in your code is exercised. This approach can catch subtle logic errors and ensure thorough testing.
-
-For demonstration, consider a **very simple function** that classifies a person’s age group:
-
-```python
-def categorize_age(age):
-    if age < 0:
-        return "Invalid"
-    elif age < 18:
-        return "Minor"
-    elif age < 65:
-        return "Adult"
-    else:
-        return "Senior"
-```
-
-This function:
-1. Returns `"Invalid"` if the age is less than 0.
-2. Returns `"Minor"` if the age is between 0 and 17 (inclusive).
-3. Returns `"Adult"` if the age is between 18 and 64 (inclusive).
-4. Returns `"Senior"` if the age is 65 or older.
-
-We’ll use this function to illustrate each testing concept.
+By systematically covering **all** code paths (control flow) and checking **proper variable usage** (data flow), you can catch **subtle or hidden errors** that might escape black box tests.
 
 ---
 
-# 2. Control Flow Testing
+## 2. Control Flow Testing: The Broader Strategy
 
-## 2.1 What Is Control Flow Testing?
-- **Control Flow Testing** focuses on the way your code’s execution paths (the “flow” of instructions) behave.
-- You typically visualize or think about a **control flow graph**, where each **node** is a block of code, and each **edge** represents a jump from one block to another (e.g., after an `if` statement, you can go to the `then` block or the `else` block).
+**Control Flow Testing** is a white box approach that analyzes *how code executes* from one statement or block to the next. You typically:
 
-## 2.2 Applying Control Flow Testing to `categorize_age`
-1. **Identify Decision Points**  
-   - In `categorize_age`, each `if` or `elif` is a **decision point**.  
-     - `if age < 0`  
-     - `elif age < 18`  
-     - `elif age < 65`  
-     - (the final `else` is also a branch)
-    
-**Control Flow Graph**
+1. Construct or imagine a **Control Flow Graph (CFG)**, where:  
+   - **Nodes** are chunks of code (or decision points).  
+   - **Edges** show how execution can move from one node to another.
 
-![control_flow_graph](./control_flow_graph.png)
+2. Use **coverage metrics** to ensure you have exercised the necessary branches and paths in that graph.
 
+### 2.1 Coverage Metrics under Control Flow Testing
 
+Below are the **four major coverage metrics** under Control Flow Testing, plus the concept of **cyclomatic complexity**.
 
-2. **Design Test Cases**  
-   - You want to ensure that you cover each of these paths.  
-   - For instance:
-     - **Test case 1**: `age = -1` → covers `if age < 0` returning `"Invalid"`.
-     - **Test case 2**: `age = 10` → covers `elif age < 18` returning `"Minor"`.
-     - **Test case 3**: `age = 40` → covers `elif age < 65` returning `"Adult"`.
-     - **Test case 4**: `age = 70` → covers the `else` branch returning `"Senior"`.
+#### 2.1.1 Statement Coverage
 
-3. **Goal**  
-   - Ensure **each control flow branch** is executed at least once.  
-   - This directly leads us to **branch coverage** (discussed further below), but from a higher-level perspective, you’re verifying the flow of logic from start to end.
+- **Definition**: Measures the percentage of **executable statements** that are run at least once during testing.  
+- **Pros**: Simple to achieve; ensures no line is completely skipped.  
+- **Cons**: Can miss untested branches. 100% statement coverage does **not** necessarily mean every decision has been tested in every possible way.
 
----
+#### 2.1.2 Branch Coverage (Decision Coverage)
 
-# 3. Data Flow Testing
-Below is an **augmented version** of the Data Flow Testing notes, **expanded** to clarify how Data Flow Testing differs from Control Flow Testing, the types of anomalies it can catch, and how it might apply in larger Python projects.
+- **Definition**: Ensures each **branch** in the code (e.g., `if`, `else`, `elif`) is executed at least once.  
+- **Pros**: More rigorous than statement coverage; reveals if an `if` condition was never tested as false (or true).  
+- **Cons**: Still does *not* guarantee that **combinations** of decisions (nested or sequential) are covered.
 
----
+#### 2.1.3 Condition Coverage
 
-## 3.1 What Is Data Flow Testing?
+- **Definition**: Ensures each **Boolean sub-condition** within a larger condition is evaluated to both true and false.  
+- **Example**: In `if (x > 0 and y < 10)`, you ensure `(x > 0)` is tested for both outcomes (true/false), and `(y < 10)` is also tested for both outcomes—possibly requiring multiple input sets.  
+- **Pros**: More fine-grained than branch coverage.  
+- **Cons**: Can require additional test cases for all sub-conditions. Doesn’t necessarily ensure all **paths** of execution are covered.
 
-1. **Definition**  
-   - **Data Flow Testing** tracks how data (variables) **enter**, are **manipulated**, and ultimately **exit** or become **“dead”** in the code.  
-   - It focuses on the **life cycle** of each variable:  
-     1. **Definition** – Where the variable is first assigned.  
-     2. **Usage** – Where the variable is read or updated.  
-     3. **Kill** – Where the variable goes out of scope or is overwritten.
+#### 2.1.4 Path Coverage
 
-2. **Primary Goals**  
-   - Identify **anomalies** such as:
-     - **Using a variable before it’s defined** (uninitialized use).  
-     - **Redefining a variable without using it** (the original value is “lost” without ever being read).  
-     - **Variables that are never used** (dead code or wasted computation).
+- **Definition**: Aims to test **every possible route** (sequence of branches/decisions) through the program.  
+- **Pros**: The most exhaustive in terms of control flow.  
+- **Cons**: Potentially explodes in complexity for real-world software with many nested decisions or loops.
 
-3. **How It Differs from Control Flow Testing**  
-   - **Control Flow Testing** is about **branches** (e.g., `if/else`, loops) and ensuring every **decision path** is executed at least once.  
-   - **Data Flow Testing** is about **how variables move** through those paths—making sure variables are **properly defined** before use, not redefined prematurely, and not left unused.  
-   - In essence, **control flow** targets the *logic structure*, while **data flow** targets the *variable usage patterns*.
+### 2.2 Cyclomatic Complexity
 
-4. **Where Data Flow Testing Is Critical**  
-   - In large or complex Python codebases where variables flow across multiple functions, classes, or modules.  
-   - In situations where you have many **shared variables**, or **state** is maintained (e.g., in object attributes, global variables, or session state in web apps).
-
----
-
-## 3.2 Applying Data Flow Testing to `categorize_age`
-
-Consider the following simple function in Python:
-
-```python
-def categorize_age(age):
-    if age < 0:
-        return "Invalid"
-    elif age < 18:
-        return "Minor"
-    elif age < 65:
-        return "Adult"
-    else:
-        return "Senior"
-```
-
-1. **In Python, Variables Are Often “Defined on the Fly”**  
-   - The parameter `age` is introduced as soon as the function is called. There’s no separate “declaration” line as in some other languages.
-
-2. **Checking Data Flow for `age`**  
-   - **Definition**: `age` is defined when the function receives its parameter.  
-   - **Usage**: `age` is used in three comparisons (`age < 0`, `age < 18`, `age < 65`).  
-   - **No Redefinitions**: We never reassign `age` inside this function.  
-   - **No Unused Variables**: We don’t define additional variables that remain unused.  
-
-3. **Identifying Potential Anomalies**  
-   - **Using a variable before it’s defined**: Not an issue here, because `age` is always defined as a function argument.  
-   - **Redefining a variable without using it**: Doesn’t apply, as `age` is never redefined.  
-   - **Never used**: No extra variable is defined and left unused.
-
-4. **Why Data Flow Testing Doesn’t Reveal Big Issues Here**  
-   - Because this function is straightforward and short, with only one variable (`age`).  
-   - In bigger codebases, you might have multiple variables passed between functions or classes, where the chance of **“use before definition”** or **“unnecessary redefinition”** is higher.
-
-5. **Example of a Subtle Data Flow Bug (Hypothetical)**  
-   ```python
-   def categorize_age_and_update_record(age, record):
-       # Suppose 'record' is expected to have 'value' updated,
-       # but we forgot to define or initialize 'value' somewhere else.
-       if 'value' not in record:
-           # We never define record['value'] here...
-           pass
-
-       if age < 0:
-           return "Invalid"
-       record['value'] = age  # Potentially overwriting something not initialized?
-       return "Updated"
-   ```
-   - A **data flow** review might show that `record['value']` is referenced without any proper definition in some flows (especially if we conditionally skip setting it).  
-   - This can lead to unexpected behavior or errors in real code, especially if you rely on `'value'` being set before use.
-
----
-
-## 3.3 Combining Data Flow & Control Flow Testing
-
-1. **Control Flow**  
-   - You’d ensure that every **branch** (`if age < 0`, `elif age < 18`, etc.) is tested.  
-   - Example test inputs: -1, 10, 40, 70.
-
-2. **Data Flow**  
-   - You’d ensure `age` (and any other variables) are **defined** and **used** in all relevant code paths.  
-   - Example checks: Does a certain path use a variable incorrectly? Is there any path where a variable remains undefined?
-
-By **combining** both approaches, you verify:
-- **All logic paths** are covered, and  
-- **All variable usages** are correct.
-
----
-
-# 4. Statement Coverage
-
-## 4.1 What Is Statement Coverage?
-- **Statement Coverage** measures the **percentage of executable lines** in your code that have been run at least once by your tests.
-- If your code has 100 lines, and your tests only execute 80 of those lines, you have **80% statement coverage**.
-
-## 4.2 Applying Statement Coverage to `categorize_age`
-- The function has the following statements:
-  1. `def categorize_age(age):`
-  2. `if age < 0:`
-  3. `return "Invalid"`
-  4. `elif age < 18:`
-  5. `return "Minor"`
-  6. `elif age < 65:`
-  7. `return "Adult"`
-  8. `else:`
-  9. `return "Senior"`
-
-- With the **four test cases** mentioned earlier (`-1`, `10`, `40`, `70`), we ensure:
-  - The `return "Invalid"` line (statement #3) is executed.
-  - The `return "Minor"` line (statement #5) is executed.
-  - The `return "Adult"` line (statement #7) is executed.
-  - The `return "Senior"` line (statement #9) is executed.
-
-- Thus, **all statements** are executed across the full set of tests. We achieve **100% statement coverage**.
-
----
-
-# 5. Branch Coverage (Decision Coverage)
-
-## 5.1 What Is Branch Coverage?
-- **Branch Coverage** (also called Decision Coverage) ensures that **each branch of a decision** (e.g., `if` or `while`) **is executed at least once**.
-- If you have a simple `if x > 0`, you need:
-  - a test where `x > 0` is **true**  
-  - a test where `x > 0` is **false**
-
-## 5.2 Applying Branch Coverage to `categorize_age`
-- Our function has multiple branches:
-  1. `if age < 0`
-  2. `elif age < 18`
-  3. `elif age < 65`
-  4. `else`
-- Each `if`/`elif`/`else` is effectively a **branch**.  
-- By having test inputs that lead to each of these outcomes, we ensure each branch is **taken**.
-  - `age = -1` → branch #1
-  - `age = 10` → branch #2
-  - `age = 40` → branch #3
-  - `age = 70` → branch #4
-- With these tests, we **cover all branches**. Again, we end up with **100% branch coverage**.
-
-> **Note**: Branch coverage goes **one level deeper** than statement coverage. You might have 100% statement coverage but **not** 100% branch coverage if, for instance, you only tested the `true` side of an `if` condition and never tested the `false` side.
-
----
-
-# 6. Condition Coverage
-
-## 6.1 What Is Condition Coverage?
-- **Condition Coverage** ensures that **each Boolean sub-expression** within a decision is evaluated to **both true and false** at least once.
-- Condition coverage is more granular than branch coverage if you have **complex** conditions (e.g., `if (x > 0 and y < 10)`).
-
-## 6.2 Applying Condition Coverage to `categorize_age`
-- In our simple function, each condition is a single comparison:  
-  - `age < 0`  
-  - `age < 18`  
-  - `age < 65`
-- Each condition is tested for **true** and **false**. For instance:
-  - `age < 0`: 
-    - True for `-1`,  
-    - False for any age ≥ 0 (e.g., 10).
-  - `age < 18`:
-    - True for 10,  
-    - False for 20, 40, 70.
-  - `age < 65`:
-    - True for 40,  
-    - False for 70.
-
-Because we covered each condition’s true/false scenario, we have full condition coverage. However, note that in more complex code (like `if age < 18 and region == 'US'`), you’d need separate tests to make `age < 18` both true and false, and `region == 'US'` both true and false, ensuring all sub-conditions are tested thoroughly.
-
----
-
-# 7. Path Coverage
-
-## 7.1 What Is Path Coverage?
-- **Path Coverage** aims to test **every possible route** through the code, considering **all combinations** of branches.
-- In larger functions with multiple nested conditions or loops, **path coverage** can become very large or even **impractical** due to the number of possible paths.
-
-## 7.2 Applying Path Coverage to `categorize_age`
-- In this example, each input follows exactly one path (one of the `if` / `elif` / `elif` / `else`).  
-- The code is a **simple chain** of conditions, so there are effectively **four possible paths**:
-  1. `age < 0` → return "Invalid"
-  2. `age >= 0` and `age < 18` → return "Minor"
-  3. `age >= 18` and `age < 65` → return "Adult"
-  4. `age >= 65` → return "Senior"
-- Our **four test cases** also cover **all four** paths. Hence, we achieve **100% path coverage**.
-
-> **In More Complex Functions**  
-> If you have nested conditions (e.g., `if x > 0:` then inside that block another `if y > 10:`), the number of paths multiplies. You’d need to consider each combination to achieve **full path coverage**.
-
----
-
-# 8. Cyclomatic Complexity
-
-## 8.1 What Is Cyclomatic Complexity?
-- **Cyclomatic Complexity** is a metric that tells you the **number of independent paths** through your code.  
-- Calculated by the formula:  
+- **Definition**: A metric that indicates how many **independent paths** exist in your code. Calculated as:
   \[
     M = E - N + 2
-  \]  
-  where:
-  - \( E \) = number of **edges** in the control flow graph  
-  - \( N \) = number of **nodes** in the control flow graph  
-  - \( M \) = Cyclomatic Complexity
+  \]
+  where \( E \) is the number of edges in the control flow graph, \( N \) is the number of nodes, and \( M \) is the complexity number.
+- **Why It Matters**: 
+  - A **higher** complexity means more branching and, by extension, more test cases needed for thorough coverage.  
+  - Encourages developers to **refactor** if complexity is too high.
 
-## 8.2 Interpreting Cyclomatic Complexity
-- A **lower complexity** (1, 2, 3) means the code is simpler with fewer branches.  
-- A **higher complexity** might indicate your code is more difficult to test and maintain. You may have many nested `if` statements or loops.
+#### 2.2.1 Merging Return Statements
 
-## 8.3 Example Calculation for `categorize_age`
-While we often let automated tools measure it, we can do a **rough** estimation:
-
-- Let’s label each node (executable block) and edges in our pseudo control flow graph:
-
-  1. Start node -> **check `age < 0`** -> 2 possible edges (true / false).
-  2. If true, go to “return `Invalid`” (end node).
-  3. If false, check `age < 18` -> 2 possible edges (true / false).
-  4. If true, go to “return `Minor`” (end node).
-  5. If false, check `age < 65` -> 2 possible edges (true / false).
-  6. If true, go to “return `Adult`” (end node).
-  7. If false, go to “return `Senior`” (end node).
-
-  Counting the edges (E) and nodes (N) precisely can vary based on how you break them down. But it’s typically around:
-  - **N** ~ 8 or 9  
-  - **E** ~ 8 or 9
-
-  This function’s complexity is fairly **low**, likely **4** or so. Automated tools (like coverage analyzers) will give the exact number. For code with multiple nested conditions and loops, you might see a complexity of 10, 20, or more.
-
-> **Implication**: The higher the Cyclomatic Complexity, the more test cases you’ll generally need to achieve **full path coverage**.
+- In many functions, you have multiple return points. For cyclomatic complexity, it’s standard to **merge** all returns into a single “End” node so you don’t artificially inflate the node/edge count.  
+- The real complexity is driven by **decision structures** (if/else/loops), not the number of returns.
 
 ---
 
-# 9. Putting It All Together: A Sample Test File
+## 3. Data Flow Testing: Complementary to Control Flow
 
-Below is a minimal example of how you might write a test file (`test_age.py`) to achieve **comprehensive coverage** of the `categorize_age` function using **pytest**:
+**Data Flow Testing** looks at **how data (variables)** move through the program. Instead of focusing on which branches are taken, data flow testing tracks:
+
+1. **Definition**: Where a variable is first assigned or receives a value.  
+2. **Usage**: Where that variable is read or used in an expression.  
+3. **Kill**: Where a variable goes out of scope or is overwritten.
+
+### 3.1 Common Anomalies Data Flow Testing Uncovers
+
+1. **Use Before Definition** (a variable is read or used before having an assigned value).  
+2. **Redefinition Without Usage** (a variable’s value is overwritten before it’s ever used, indicating a potential logical mistake).  
+3. **Never Used** (a variable is defined or assigned but never actually used, indicating dead or vestigial code).
+
+### 3.2 Data Flow Graph vs. Control Flow Graph
+
+- **Data Flow Graph**: Emphasizes the *life cycle of variables* across nodes.  
+- **Control Flow Graph**: Emphasizes *branches and decisions*.  
+- The two overlap but highlight different aspects. Control flow is about *logic paths*, data flow is about *variable usage patterns*.
+
+---
+
+## 4. Our Use Case: `categorize_age`
+
+To illustrate **both** control flow and data flow testing, consider the following **simple Python function**:
+
+```python
+def categorize_age(age):
+    if age < 0:
+        return "Invalid"
+    elif age < 18:
+        return "Minor"
+    elif age < 65:
+        return "Adult"
+    else:
+        return "Senior"
+```
+
+### 4.1 Control Flow Graph (CFG)
+
+Imagine the **CFG** with a **Start** node, a sequence of 3 decisions (`if age<0`, `elif age<18`, `elif age<65`), and an **End** node that unifies all return statements:
+
+```
+  ┌─────────────┐
+  │   (Start)   │
+  └─────────────┘
+         ▼
+   ┌─────────────┐
+   │ age < 0 ?   │
+   └─────────────┘
+       /   \
+      /True \False
+      ▼      ▼
+ (Return)   ┌─────────────┐
+            │ age < 18 ?  │
+            └─────────────┘
+               /   \
+              /True \False
+              ▼      ▼
+          (Return) ┌─────────────┐
+                    │ age < 65 ? │
+                    └─────────────┘
+                       /   \
+                      /True \False
+                      ▼      ▼
+                   (Return) (Return)
+
+```
+
+(All returns collapse into a single conceptual “End” in terms of cyclomatic complexity.)
+
+### 4.2 Applying Control Flow Testing
+
+1. **Statement Coverage**  
+   - We need to run **every line**. The function has four return statements.  
+   - If we test `age = -1, 10, 40, 70`, we’ll execute all statements (`return "Invalid"`, `return "Minor"`, `return "Adult"`, `return "Senior"`).
+
+2. **Branch Coverage**  
+   - Each decision (`if age<0`, `elif age<18`, `elif age<65`) must be tested both ways (true/false).  
+   - For instance:  
+     - `age=-1`: `age<0` = true (hit `"Invalid"`).  
+     - `age=10`: first check is false, second check (`age<18`) = true (`"Minor"`).  
+     - `age=40`: first check false, second check false, third check (`age<65`) = true (`"Adult"`).  
+     - `age=70`: eventually leads to the `else: return "Senior"` (third check is false).  
+   - These four tests ensure all branches are taken at least once.
+
+3. **Condition Coverage**  
+   - Each condition is a single sub-expression (`age < 0`, `age < 18`, `age < 65`). We test them both as true and false in our set of test inputs.  
+   - For example, `age < 0` is true for -1 and false for 10, 40, 70.
+
+4. **Path Coverage**  
+   - The function effectively has 4 final paths. By having an input that results in each path, we achieve 100% path coverage in this simple chain.
+
+5. **Cyclomatic Complexity**  
+   - Label nodes as: Start, Decision1 (`age<0?`), Decision2 (`age<18?`), Decision3 (`age<65?`), End.  
+   - Typically you’d get \(N=5\), \(E=7\). Then \(M = E - N + 2 = 7 - 5 + 2 = 4\).  
+   - Interpreted as 4 independent paths, aligning with the 4 outcomes.
+
+### 4.3 Applying Data Flow Testing
+
+- **Variables**: We have just one main variable, `age`.  
+- **Definition**: `age` is defined when the function parameter is received.  
+- **Usage**: `age` is used in each comparison.  
+- **No Re-definitions**: We never assign `age` a new value.  
+- **No Extra Variables**: No risk of “never used” or “use before def.”  
+
+**Conclusion**: Data flow testing for such a simple function doesn’t reveal anomalies. In more complex code (with additional variables, parameters, or state management), data flow testing would be far more critical for spotting subtle errors.
+
+---
+
+## 5. Putting It All Together: Sample `pytest` Suite
+
+A minimal `pytest` suite showing how to test for coverage:
 
 ```python
 import pytest
@@ -323,21 +198,41 @@ def test_categorize_age_senior():
     assert categorize_age(70) == "Senior"
 ```
 
-- Running `pytest --cov=my_module --cov-report=term-missing` would likely show **100% statement coverage** and **100% branch coverage** for the `categorize_age` function.  
-- With these tests, each **control flow** path is executed, each **condition** is tested both ways (true or false), and the **data flow** for the variable `age` is straightforward and correct.
+Running:
+
+```bash
+pytest --cov=my_module --cov-report=term-missing
+```
+
+- Likely yields **100% statement** and **branch** coverage for `categorize_age`.
+- Condition coverage also is effectively satisfied, as is path coverage (given each outcome is tested).
 
 ---
 
-# 10. Conclusion
+## 6. Key Takeaways
 
-By applying **white box testing** strategies to even a simple function, we can see:
+1. **Control Flow Testing**:  
+   - **Statement** and **Branch Coverage** are the most common.  
+   - More advanced metrics (Condition, Path) may be used in especially critical or complex code.  
+   - **Cyclomatic Complexity** guides how many tests you might need if you want full path coverage.
 
-1. **Control Flow Testing** ensures we’ve inspected how the code flows from one branch to another.  
-2. **Data Flow Testing** helps confirm that variables are used properly.  
-3. **Statement Coverage** verifies every line is run at least once.  
-4. **Branch Coverage** ensures every `if`/`else` decision is taken in both directions.  
-5. **Condition Coverage** digs deeper into each Boolean expression within a condition.  
-6. **Path Coverage** seeks to cover every possible route through the code, which can balloon in complexity if you have nested logic.  
-7. **Cyclomatic Complexity** helps us understand how many independent paths exist, guiding how many tests might be needed for thorough coverage.
+2. **Data Flow Testing**:  
+   - Focuses on **variables’ definitions and uses**.  
+   - Helps catch uninitialized variables, unused variables, or redefinitions that overwrite data prematurely.  
+   - Crucial in large, multi-function codebases with shared or global state.
 
-For **novice students**, it’s **crucial** to understand these concepts as they are at the core of writing robust test suites. By starting with a small example, you gain the **foundational skills** to tackle more complex applications where multiple nested conditions, loops, and larger control flow graphs exist.
+3. **Integration**:  
+   - **Both** approaches can be used together to ensure you test **all branches** and **handle variables correctly**.  
+   - A robust test suite addresses both **logic paths** (control flow) and **variable correctness** (data flow).
+
+4. **Simplicity vs. Complexity**:  
+   - Our `categorize_age` example is straightforward—just one variable and a few branches. In **real-world** apps (with multiple variables, nested conditions, multi-level function calls), both control flow and data flow testing become far more valuable.
+
+---
+
+## 7. Conclusion
+
+- **Control Flow Testing** covers **how the code flows** through decisions, focusing on coverage metrics like statement, branch, condition, and path.  
+- **Cyclomatic Complexity** helps quantify how “branchy” your function is and, therefore, how many tests might be needed for thorough coverage.  
+- **Data Flow Testing** zeroes in on **variable usage**, catching anomalies like “use before definition” or “never used” variables.  
+- Combining these **white box testing** strategies results in a comprehensive test approach, ensuring both **logic correctness** (control flow) and **correct handling of variables** (data flow), ultimately improving overall software reliability.
