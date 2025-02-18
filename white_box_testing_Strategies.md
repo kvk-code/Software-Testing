@@ -41,6 +41,10 @@ We’ll use this function to illustrate each testing concept.
      - `elif age < 18`  
      - `elif age < 65`  
      - (the final `else` is also a branch)
+    
+**Control Flow Graph**
+
+
 
 2. **Design Test Cases**  
    - You want to ensure that you cover each of these paths.  
