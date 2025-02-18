@@ -63,22 +63,102 @@ We’ll use this function to illustrate each testing concept.
 ---
 
 # 3. Data Flow Testing
+Below is an **augmented version** of the Data Flow Testing notes, **expanded** to clarify how Data Flow Testing differs from Control Flow Testing, the types of anomalies it can catch, and how it might apply in larger Python projects.
+
+---
 
 ## 3.1 What Is Data Flow Testing?
-- **Data Flow Testing** tracks how data (variables) **enter**, **are manipulated**, and **leave** or become “dead” in the code.
-- It looks for anomalies like:
-  - **Using a variable before it’s defined**  
-  - **Redefining a variable without using it**  
-  - **Variables that are never used**  
+
+1. **Definition**  
+   - **Data Flow Testing** tracks how data (variables) **enter**, are **manipulated**, and ultimately **exit** or become **“dead”** in the code.  
+   - It focuses on the **life cycle** of each variable:  
+     1. **Definition** – Where the variable is first assigned.  
+     2. **Usage** – Where the variable is read or updated.  
+     3. **Kill** – Where the variable goes out of scope or is overwritten.
+
+2. **Primary Goals**  
+   - Identify **anomalies** such as:
+     - **Using a variable before it’s defined** (uninitialized use).  
+     - **Redefining a variable without using it** (the original value is “lost” without ever being read).  
+     - **Variables that are never used** (dead code or wasted computation).
+
+3. **How It Differs from Control Flow Testing**  
+   - **Control Flow Testing** is about **branches** (e.g., `if/else`, loops) and ensuring every **decision path** is executed at least once.  
+   - **Data Flow Testing** is about **how variables move** through those paths—making sure variables are **properly defined** before use, not redefined prematurely, and not left unused.  
+   - In essence, **control flow** targets the *logic structure*, while **data flow** targets the *variable usage patterns*.
+
+4. **Where Data Flow Testing Is Critical**  
+   - In large or complex Python codebases where variables flow across multiple functions, classes, or modules.  
+   - In situations where you have many **shared variables**, or **state** is maintained (e.g., in object attributes, global variables, or session state in web apps).
+
+---
 
 ## 3.2 Applying Data Flow Testing to `categorize_age`
-- In Python, variables are often defined on-the-fly (like `age` in a function parameter).
-- **Data flow checks** here might consider:
-  - Is `age` used appropriately after it’s received as a function argument? Yes, it is used in each condition.  
-  - Are there any paths where `age` is **not** used or is used incorrectly? In our snippet, not really; it’s consistent across condition checks.  
-  - Is `age` set to something else unexpectedly? No, we never change `age` in the function.
 
-Data flow testing for this small function won’t reveal big issues, but in larger, more complex code—where you have multiple variables and pass them around different functions—data flow testing can reveal subtle bugs (like using an uninitialized variable).
+Consider the following simple function in Python:
+
+```python
+def categorize_age(age):
+    if age < 0:
+        return "Invalid"
+    elif age < 18:
+        return "Minor"
+    elif age < 65:
+        return "Adult"
+    else:
+        return "Senior"
+```
+
+1. **In Python, Variables Are Often “Defined on the Fly”**  
+   - The parameter `age` is introduced as soon as the function is called. There’s no separate “declaration” line as in some other languages.
+
+2. **Checking Data Flow for `age`**  
+   - **Definition**: `age` is defined when the function receives its parameter.  
+   - **Usage**: `age` is used in three comparisons (`age < 0`, `age < 18`, `age < 65`).  
+   - **No Redefinitions**: We never reassign `age` inside this function.  
+   - **No Unused Variables**: We don’t define additional variables that remain unused.  
+
+3. **Identifying Potential Anomalies**  
+   - **Using a variable before it’s defined**: Not an issue here, because `age` is always defined as a function argument.  
+   - **Redefining a variable without using it**: Doesn’t apply, as `age` is never redefined.  
+   - **Never used**: No extra variable is defined and left unused.
+
+4. **Why Data Flow Testing Doesn’t Reveal Big Issues Here**  
+   - Because this function is straightforward and short, with only one variable (`age`).  
+   - In bigger codebases, you might have multiple variables passed between functions or classes, where the chance of **“use before definition”** or **“unnecessary redefinition”** is higher.
+
+5. **Example of a Subtle Data Flow Bug (Hypothetical)**  
+   ```python
+   def categorize_age_and_update_record(age, record):
+       # Suppose 'record' is expected to have 'value' updated,
+       # but we forgot to define or initialize 'value' somewhere else.
+       if 'value' not in record:
+           # We never define record['value'] here...
+           pass
+
+       if age < 0:
+           return "Invalid"
+       record['value'] = age  # Potentially overwriting something not initialized?
+       return "Updated"
+   ```
+   - A **data flow** review might show that `record['value']` is referenced without any proper definition in some flows (especially if we conditionally skip setting it).  
+   - This can lead to unexpected behavior or errors in real code, especially if you rely on `'value'` being set before use.
+
+---
+
+## 3.3 Combining Data Flow & Control Flow Testing
+
+1. **Control Flow**  
+   - You’d ensure that every **branch** (`if age < 0`, `elif age < 18`, etc.) is tested.  
+   - Example test inputs: -1, 10, 40, 70.
+
+2. **Data Flow**  
+   - You’d ensure `age` (and any other variables) are **defined** and **used** in all relevant code paths.  
+   - Example checks: Does a certain path use a variable incorrectly? Is there any path where a variable remains undefined?
+
+By **combining** both approaches, you verify:
+- **All logic paths** are covered, and  
+- **All variable usages** are correct.
 
 ---
 
